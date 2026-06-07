@@ -2,7 +2,7 @@
 ### Paste. Scan. Secure.
 
 CS6620 Cloud Computing — Spring 2026 — Northeastern University  
-Group 10 — Isha Pargaonkar, Harini Hari, Ruchira Ravindra Karle
+Group 10 — Ruchira Ravindra Karle, Isha Pargaonkar, Harini Hari
 
 ---
 
@@ -120,13 +120,7 @@ Each check is pass/fail with a severity (LOW/MEDIUM/HIGH) and the overall score 
 Each scan (both SAST and Pentest) gets stored with this structure:
 
 ```
-scanId (String) — partition key, unique ID per scan
-type (String) — "sast" or "pentest"
-timestamp (String) — ISO timestamp
-score (Number) — 0-100 security score
-s3Key (String) — path to full report in S3
-url (String) — for pentest scans, the URL that was scanned
-userId (String) — for history lookup (GSI)
+
 ```
 
 ---
@@ -147,22 +141,7 @@ userId (String) — for history lookup (GSI)
 
 ## How to run locally
 
-```bash
-# Clone the repo
-git clone https://github.com/ruchirakarle/SecureScan.git
-cd SecureScan
 
-# Run everything with docker-compose
-docker-compose up
-```
 
-The frontend will be at `http://localhost:3000`  
-The backend API will be at `http://localhost:4000`
 
----
 
-## Notes
-
-- Remember to stop your EC2 instance when not in use to avoid charges
-- The ECS Fargate tasks scale to zero when there are no jobs in the queue
-- All infrastructure is defined in Terraform so anyone on the team can bring it up and tear it down
