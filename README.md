@@ -1,7 +1,7 @@
 # SecureScan
 ### Paste. Scan. Secure.
 
-CS6620 Cloud Computing — Spring 2026 — Northeastern University  
+CS6620 Cloud Computing — Summer 2026 — Northeastern University  
 Group 10 — Ruchira Ravindra Karle, Isha Pargaonkar, Harini Hari
 
 ---
