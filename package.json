@@ -1,0 +1,11 @@
+{
+  "name": "pentest-scanner",
+  "version": "1.0.0",
+  "main": "scanner.js",
+  "dependencies": {
+    "@aws-sdk/client-sqs": "^3.0.0",
+    "@aws-sdk/client-dynamodb": "^3.0.0",
+    "@aws-sdk/client-s3": "^3.0.0",
+    "@aws-sdk/client-sns": "^3.0.0"
+  }
+}
