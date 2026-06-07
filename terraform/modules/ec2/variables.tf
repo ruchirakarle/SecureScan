@@ -1,0 +1,11 @@
+variable "vpc_id"                { type = string }
+variable "public_subnet_id"      { type = string }
+variable "ami_id"                { type = string }
+variable "key_pair_name"         { type = string }
+variable "aws_region"            { type = string }
+variable "dynamodb_table"        { type = string }
+variable "s3_reports_bucket"     { type = string }
+variable "sqs_sast_queue_url"    { type = string }
+variable "sqs_pentest_queue_url" { type = string }
+variable "sns_topic_arn"         { type = string }
+variable "sast_scanner_url"      { type = string }
