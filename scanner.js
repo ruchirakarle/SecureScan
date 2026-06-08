@@ -1,19 +1,13 @@
-const { SQSClient, ReceiveMessageCommand, DeleteMessageCommand } = require("@aws-sdk/client-sqs");
-const { DynamoDBClient, PutItemCommand } = require("@aws-sdk/client-dynamodb");
-const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
-const { SNSClient, PublishCommand } = require("@aws-sdk/client-sns");
+const express = require("express");
 const https = require("https");
+const http = require("http");
 
-const sqs = new SQSClient({ region: process.env.AWS_REGION || "us-east-1" });
-const dynamo = new DynamoDBClient({ region: process.env.AWS_REGION || "us-east-1" });
-const s3 = new S3Client({ region: process.env.AWS_REGION || "us-east-1" });
-const sns = new SNSClient({ region: process.env.AWS_REGION || "us-east-1" });
+const app = express();
+app.use(express.json());
 
-const QUEUE_URL = process.env.PENTEST_QUEUE_URL;
-const TABLE_NAME = process.env.DYNAMODB_TABLE || "securescan-history";
-const BUCKET_NAME = process.env.S3_BUCKET || "securescan-reports";
-const SNS_TOPIC_ARN = process.env.SNS_TOPIC_ARN;
+const PORT = process.env.PORT || 3002;
 
+// Run 6 security checks on a URL
 async function runPentestChecks(url) {
     const results = [];
 
@@ -45,7 +39,7 @@ async function runPentestChecks(url) {
     // Check 3: SQL Injection probe
     results.push({
         check: "SQL Injection Probe",
-        passed: true,
+        passed: !url.includes("'") && !url.includes("--"),
         severity: "LOW",
         details: "No obvious SQLi vectors in endpoint"
     });
@@ -53,7 +47,7 @@ async function runPentestChecks(url) {
     // Check 4: XSS probe
     results.push({
         check: "XSS Probe",
-        passed: true,
+        passed: !url.includes("<script>") && !url.includes("javascript:"),
         severity: "LOW",
         details: "No reflected XSS detected"
     });
@@ -61,27 +55,29 @@ async function runPentestChecks(url) {
     // Check 5: Open redirect
     results.push({
         check: "Open Redirect Check",
-        passed: true,
-        severity: "LOW"
+        passed: !url.includes("redirect=") && !url.includes("url="),
+        severity: "MEDIUM"
     });
 
     // Check 6: Sensitive data exposure
     results.push({
         check: "Sensitive Data Exposure",
-        passed: !url.includes("password") && !url.includes("token"),
-        severity: "MEDIUM"
+        passed: !url.includes("password") && !url.includes("token") && !url.includes("secret"),
+        severity: "HIGH"
     });
 
     const passed = results.filter(r => r.passed).length;
     const score = Math.round((passed / results.length) * 100);
+    const severity = score >= 80 ? "LOW" : score >= 50 ? "MEDIUM" : "HIGH";
     const hasHigh = results.some(r => !r.passed && r.severity === "HIGH");
 
-    return { results, score, hasHigh };
+    return { results, score, severity, hasHigh };
 }
 
 async function checkHeaders(url) {
     return new Promise((resolve) => {
-        https.get(url, (res) => {
+        const client = url.startsWith("https") ? https : http;
+        client.get(url, (res) => {
             const missing = [];
             if (!res.headers["x-frame-options"]) missing.push("X-Frame-Options");
             if (!res.headers["x-content-type-options"]) missing.push("X-Content-Type-Options");
@@ -94,84 +90,48 @@ async function checkHeaders(url) {
     });
 }
 
-async function processJob(message) {
-    const body = JSON.parse(message.Body);
-    const { scanId, url } = body;
+// Health check endpoint
+app.get("/health", (req, res) => {
+    res.json({ status: "ok", service: "pentest-scanner" });
+});
 
-    console.log(`Processing pentest scan ${scanId} for URL: ${url}`);
+// Main scan endpoint
+app.post("/scan", async (req, res) => {
+    const { url } = req.body;
 
-    const { results, score, hasHigh } = await runPentestChecks(url);
-
-    // Save report to S3
-    await s3.send(new PutObjectCommand({
-        Bucket: BUCKET_NAME,
-        Key: `pentest/${scanId}.json`,
-        Body: JSON.stringify({
-            scanId, url, results, score,
-            timestamp: new Date().toISOString()
-        }),
-        ContentType: "application/json"
-    }));
-
-    // Save metadata to DynamoDB
-    await dynamo.send(new PutItemCommand({
-        TableName: TABLE_NAME,
-        Item: {
-            scanId: { S: scanId },
-            type: { S: "pentest" },
-            url: { S: url },
-            score: { N: score.toString() },
-            timestamp: { S: new Date().toISOString() },
-            s3Key: { S: `pentest/${scanId}.json` }
-        }
-    }));
-
-    // Alert if HIGH severity found
-    if (hasHigh && SNS_TOPIC_ARN) {
-        await sns.send(new PublishCommand({
-            TopicArn: SNS_TOPIC_ARN,
-            Subject: `HIGH Severity - SecureScan Pentest Alert`,
-            Message: `Scan ${scanId} found HIGH severity issues in ${url}. Score: ${score}/100`
-        }));
+    if (!url) {
+        return res.status(400).json({ error: "URL is required" });
     }
 
-    console.log(`Scan ${scanId} complete. Score: ${score}/100`);
-}
+    console.log(`Running pentest scan on: ${url}`);
 
-async function pollQueue() {
-    console.log("Pentest scanner started, polling SQS...");
+    try {
+        const { results, score, severity, hasHigh } = await runPentestChecks(url);
 
-    while (true) {
-        try {
-            const response = await sqs.send(new ReceiveMessageCommand({
-                QueueUrl: QUEUE_URL,
-                MaxNumberOfMessages: 1,
-                WaitTimeSeconds: 20
-            }));
+        const scanResult = {
+            scanId: `pentest-${Date.now()}`,
+            scanType: "API",
+            target: url,
+            score,
+            severity,
+            findings: results,
+            status: "COMPLETED",
+            createdAt: new Date().toISOString()
+        };
 
-            if (response.Messages && response.Messages.length > 0) {
-                const message = response.Messages[0];
-                let retries = 0;
+        console.log(`Scan complete. Score: ${score}/100, Severity: ${severity}`);
+        res.json(scanResult);
 
-                while (retries < 3) {
-                    try {
-                        await processJob(message);
-                        await sqs.send(new DeleteMessageCommand({
-                            QueueUrl: QUEUE_URL,
-                            ReceiptHandle: message.ReceiptHandle
-                        }));
-                        break;
-                    } catch (err) {
-                        retries++;
-                        console.error(`Retry ${retries}/3 failed:`, err.message);
-                    }
-                }
-            }
-        } catch (err) {
-            console.error("Queue polling error:", err.message);
-            await new Promise(r => setTimeout(r, 5000));
-        }
+    } catch (error) {
+        console.error("Scan error:", error.message);
+        res.status(500).json({
+            error: "Scan failed",
+            details: error.message,
+            status: "FAILED"
+        });
     }
-}
+});
 
-pollQueue();
+app.listen(PORT, () => {
+    console.log(`Pentest scanner running on port ${PORT}`);
+});
