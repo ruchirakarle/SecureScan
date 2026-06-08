@@ -23,7 +23,7 @@ services:
   # ── Person 3: Pentest scanner ────────────────────────────────
   pentest:
     build:
-      context: ./pentest-service
+      context: ./pentest/backend
       dockerfile: Dockerfile
     ports:
       - "3002:3002"
