@@ -1,3 +1,16 @@
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.0"
+    }
+  }
+}
+
+provider "aws" {
+  region = var.aws_region
+}
+
 resource "aws_security_group" "backend" {
   name        = "securescan-backend-sg"
   description = "Security group for SecureScan backend API"
