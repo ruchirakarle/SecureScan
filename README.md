@@ -79,13 +79,13 @@ SecureScan/
 
 ## Team and Work Split
 
-**Person 1 — Isha Pargaonkar — Frontend + Infrastructure Core**
+**Person 1 — Harini Hari — Frontend + Infrastructure Core**
 - React frontend (home, scan submission, results, history pages)
 - S3 static website deployment
 - Terraform for S3, DynamoDB, SNS, SQS + dead letter queues
 - Local docker-compose for team development
 
-**Person 2 — Harini Hari — Backend API + SAST Microservice**
+**Person 2 — Isha Pargaonkar — Backend API + SAST Microservice**
 - Node.js/Express API on EC2
 - SAST scanner as Lambda function
 - SQS retry logic (3 retries) + DLQ + SNS failure alerts
