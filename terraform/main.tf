@@ -43,7 +43,10 @@ module "ecs_pentest" {
 
 # ── CloudWatch Module──────────────────
 module "cloudwatch" {
-  source = "./modules/cloudwatch"
-
-  aws_region = var.aws_region
+  source           = "./modules/cloudwatch"
+  sns_topic_arn    = var.sns_topic_arn
+  ec2_instance_id  = ""
+  ecs_cluster_name = "securescan-cluster"
+  ecs_service_name = "securescan-pentest-service"
+  dlq_name         = "securescan-scan-dlq-dev"
 }
