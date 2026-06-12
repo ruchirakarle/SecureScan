@@ -6,6 +6,7 @@ variable "sns_topic_arn" {
 variable "ec2_instance_id" {
   type        = string
   description = "EC2 instance ID"
+  default     = ""
 }
 
 variable "ecs_cluster_name" {
