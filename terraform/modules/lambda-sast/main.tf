@@ -69,7 +69,6 @@ resource "aws_lambda_function" "sast" {
 
   environment {
     variables = {
-      AWS_REGION_NAME   = var.aws_region
       DYNAMODB_TABLE    = var.dynamodb_table
       S3_REPORTS_BUCKET = var.s3_reports_bucket
       SNS_TOPIC_ARN     = var.sns_topic_arn
