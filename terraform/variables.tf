@@ -19,3 +19,29 @@ variable "alert_email" {
   type        = string
   default     = "hari.h@northeastern.edu"
 }
+
+
+# Person 3 variables by Ruchira
+variable "pentest_queue_url" {
+  default = ""
+}
+
+variable "pentest_queue_arn" {
+  default = ""
+}
+
+variable "sns_topic_arn" {
+  default = ""
+}
+
+variable "s3_bucket" {
+  default = "securescan-reports"
+}
+
+variable "dynamodb_table" {
+  default = "securescan-history"
+}
+
+variable "dynamodb_table_arn" {
+  default = ""
+}
