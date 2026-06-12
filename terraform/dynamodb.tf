@@ -3,31 +3,22 @@
 # Owner: Person 1
 #
 # Schema:
-#   PK:  scanId     (String) — UUID per scan
-#   SK:  createdAt  (String) — ISO 8601 timestamp
+#   PK:  scanId     (String) — UUID per scan (no range key)
 #
-# GSI 1: scanType-createdAt-index
-#   PK:  scanType   (String) — "CODE" | "API"
-#   SK:  createdAt  (String) — for sorted history per type
+# GSI 1: scanType-index
+#   PK:  scanType   (String) — "CODE" | "API" — for history per type
 #
-# GSI 2: severity-createdAt-index
-#   PK:  severity   (String) — "HIGH" | "MEDIUM" | "LOW"
-#   SK:  createdAt  (String) — for filtering by severity
+# GSI 2: severity-index
+#   PK:  severity   (String) — "HIGH" | "MEDIUM" | "LOW" — for filtering by severity
 ##############################################################
 
 resource "aws_dynamodb_table" "scans" {
   name         = "${var.project_name}-scans-${var.environment}"
   billing_mode = "PAY_PER_REQUEST"
   hash_key     = "scanId"
-  range_key    = "createdAt"
 
   attribute {
     name = "scanId"
-    type = "S"
-  }
-
-  attribute {
-    name = "createdAt"
     type = "S"
   }
 
@@ -42,16 +33,14 @@ resource "aws_dynamodb_table" "scans" {
   }
 
   global_secondary_index {
-    name            = "scanType-createdAt-index"
+    name            = "scanType-index"
     hash_key        = "scanType"
-    range_key       = "createdAt"
     projection_type = "ALL"
   }
 
   global_secondary_index {
-    name            = "severity-createdAt-index"
+    name            = "severity-index"
     hash_key        = "severity"
-    range_key       = "createdAt"
     projection_type = "ALL"
   }
 

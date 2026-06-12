@@ -3,9 +3,13 @@
 # Owner: Person 1
 ##############################################################
 
+# Account ID is appended to bucket names so teammates sharing this
+# config don't collide in S3's global namespace.
+data "aws_caller_identity" "current" {}
+
 # ── Frontend bucket ─────────────────────────────────────────
 resource "aws_s3_bucket" "frontend" {
-  bucket        = "${var.project_name}-frontend-${var.environment}"
+  bucket        = "${var.project_name}-frontend-${var.environment}-${data.aws_caller_identity.current.account_id}"
   force_destroy = true
 
   tags = {
@@ -47,7 +51,7 @@ resource "aws_s3_bucket_policy" "frontend" {
 
 # ── Reports bucket ───────────────────────────────────────────
 resource "aws_s3_bucket" "reports" {
-  bucket        = "${var.project_name}-reports-${var.environment}"
+  bucket        = "${var.project_name}-reports-${var.environment}-${data.aws_caller_identity.current.account_id}"
   force_destroy = true
 
   tags = {

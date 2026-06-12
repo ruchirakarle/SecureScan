@@ -63,10 +63,10 @@ resource "aws_cloudwatch_metric_alarm" "dlq_alarm" {
   }
 }
 
-# ── SQS: Main scan queue ─────────────────────────────────────
+# ── SQS: Main scan queue (SAST) ──────────────────────────────
 resource "aws_sqs_queue" "scan_queue" {
   name                       = "${var.project_name}-scan-queue-${var.environment}"
-  visibility_timeout_seconds = 30
+  visibility_timeout_seconds = 360
   message_retention_seconds  = 86400
 
   redrive_policy = jsonencode({
@@ -76,6 +76,51 @@ resource "aws_sqs_queue" "scan_queue" {
 
   tags = {
     Name        = "${var.project_name}-scan-queue"
+    Environment = var.environment
+  }
+}
+
+# ── SQS: Pentest Dead Letter Queue ───────────────────────────
+resource "aws_sqs_queue" "pentest_dlq" {
+  name                      = "${var.project_name}-pentest-dlq-${var.environment}"
+  message_retention_seconds = 1209600
+
+  tags = {
+    Name        = "${var.project_name}-pentest-dlq"
+    Environment = var.environment
+  }
+}
+
+resource "aws_cloudwatch_metric_alarm" "pentest_dlq_alarm" {
+  alarm_name          = "${var.project_name}-pentest-dlq-not-empty"
+  comparison_operator = "GreaterThanThreshold"
+  evaluation_periods  = 1
+  metric_name         = "ApproximateNumberOfMessagesVisible"
+  namespace           = "AWS/SQS"
+  period              = 60
+  statistic           = "Sum"
+  threshold           = 0
+  alarm_description   = "Pentest scan job landed in DLQ after 3 retries"
+  alarm_actions       = [aws_sns_topic.dlq_alerts.arn]
+
+  dimensions = {
+    QueueName = aws_sqs_queue.pentest_dlq.name
+  }
+}
+
+# ── SQS: Pentest scan queue ──────────────────────────────────
+resource "aws_sqs_queue" "pentest_queue" {
+  name                       = "${var.project_name}-pentest-queue-${var.environment}"
+  visibility_timeout_seconds = 360
+  message_retention_seconds  = 86400
+
+  redrive_policy = jsonencode({
+    deadLetterTargetArn = aws_sqs_queue.pentest_dlq.arn
+    maxReceiveCount     = 3
+  })
+
+  tags = {
+    Name        = "${var.project_name}-pentest-queue"
     Environment = var.environment
   }
 }
@@ -95,4 +140,16 @@ output "sqs_scan_queue_arn" {
 
 output "sqs_dlq_url" {
   value = aws_sqs_queue.scan_dlq.url
+}
+
+output "sqs_pentest_queue_url" {
+  value = aws_sqs_queue.pentest_queue.url
+}
+
+output "sqs_pentest_queue_arn" {
+  value = aws_sqs_queue.pentest_queue.arn
+}
+
+output "sqs_pentest_dlq_url" {
+  value = aws_sqs_queue.pentest_dlq.url
 }

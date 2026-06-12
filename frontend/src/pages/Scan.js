@@ -1,6 +1,8 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { runCodeScan, runApiScan } from "../services/api";
+import { runCodeScan, runApiScan, fetchScan } from "../services/api";
+
+const POLL_INTERVAL_MS = 2000;
 
 export default function Scan() {
   const navigate = useNavigate();
@@ -8,25 +10,57 @@ export default function Scan() {
   const [code, setCode] = useState("");
   const [apiUrl, setApiUrl] = useState("");
   const [loading, setLoading] = useState(false);
+  const [status, setStatus] = useState(null);
   const [error, setError] = useState(null);
+
+  // Track unmount so polling stops if the user navigates away mid-scan.
+  const activeRef = useRef(true);
+  useEffect(() => {
+    activeRef.current = true;
+    return () => { activeRef.current = false; };
+  }, []);
+
+  function wait(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  async function pollUntilDone(scanId) {
+    while (activeRef.current) {
+      const result = await fetchScan(scanId);
+      if (result.status === "COMPLETED") return result;
+      if (result.status === "FAILED") {
+        throw new Error(result.errorMessage || "Scan failed.");
+      }
+      setStatus(result.status || "PENDING");
+      await wait(POLL_INTERVAL_MS);
+    }
+    return null;
+  }
 
   async function handleSubmit() {
     setError(null);
     setLoading(true);
+    setStatus("PENDING");
     try {
-      let result;
+      let submission;
       if (tab === "CODE") {
         if (!code.trim()) throw new Error("Please paste some JavaScript code.");
-        result = await runCodeScan(code);
+        submission = await runCodeScan(code);
       } else {
         if (!apiUrl.trim()) throw new Error("Please enter an API URL.");
-        result = await runApiScan(apiUrl);
+        submission = await runApiScan(apiUrl);
       }
+
+      const result = await pollUntilDone(submission.scanId);
+      if (!result) return; // component unmounted — stop silently
       navigate("/results", { state: { result } });
     } catch (err) {
-      setError(err.message);
+      if (activeRef.current) setError(err.message);
     } finally {
-      setLoading(false);
+      if (activeRef.current) {
+        setLoading(false);
+        setStatus(null);
+      }
     }
   }
 
@@ -107,7 +141,9 @@ export default function Scan() {
             {loading ? <><span className="spinner" /> Scanning…</> : "Run Scan →"}
           </button>
           {loading && (
-            <span style={{ fontSize: "0.8rem", color: "var(--muted)" }}>This may take a few seconds</span>
+            <span style={{ fontSize: "0.8rem", color: "var(--muted)" }}>
+              {status === "RUNNING" ? "Analyzing target…" : "Submitting scan…"} this may take a few seconds
+            </span>
           )}
         </div>
       </div>

@@ -1,0 +1,12 @@
+# SecureScan — Terraform variable values (TEMPLATE)
+#
+# Copy this file to terraform.tfvars and fill in your own values:
+#   cp terraform.tfvars.example terraform.tfvars
+#
+# terraform.tfvars is git-ignored so real values (e.g. alert_email) are
+# never committed. This .example file IS committed as a reference.
+
+aws_region   = "us-east-1"        # AWS region to deploy into
+project_name = "securescan"       # Prefix for all resource names
+environment  = "dev"              # Deployment environment (e.g. dev, staging, prod)
+alert_email  = "you@example.com"  # Email to receive HIGH severity + DLQ alerts

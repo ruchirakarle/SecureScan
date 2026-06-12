@@ -13,19 +13,23 @@ async function request(path, options = {}) {
 }
 
 export function runCodeScan(code) {
-  return request("/scan/code", {
+  return request("/api/scans/code", {
     method: "POST",
     body: JSON.stringify({ code }),
   });
 }
 
 export function runApiScan(url) {
-  return request("/scan/api", {
+  return request("/api/scans/url", {
     method: "POST",
-    body: JSON.stringify({ url }),
+    body: JSON.stringify({ targetUrl: url }),
   });
 }
 
+export function fetchScan(scanId) {
+  return request(`/api/scans/${scanId}`);
+}
+
 export function fetchHistory() {
-  return request("/scans");
+  return request("/api/history").then((data) => data.scans || []);
 }

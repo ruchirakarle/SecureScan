@@ -59,8 +59,8 @@ terraform apply
 | `target` | String | Code hash or API URL |
 | `status` | String | `COMPLETED` or `FAILED` |
 
-GSI 1: `scanType-createdAt-index` — query by scan type sorted by time  
-GSI 2: `severity-createdAt-index` — query by severity sorted by time
+GSI 1: `scanType-index` — query by scan type  
+GSI 2: `severity-index` — query by severity
 
 ---
 
@@ -89,3 +89,7 @@ docker-compose up
 | `GET` | `/scans` | Returns array of scan history |
 
 Set the backend URL in `frontend/.env`:
+
+
+
+
