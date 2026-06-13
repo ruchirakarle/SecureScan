@@ -115,3 +115,11 @@ output "private_subnet_1_id" {
 output "private_subnet_2_id" {
   value = aws_subnet.private_2.id
 }
+
+resource "aws_vpc_endpoint" "dynamodb" {
+  vpc_id            = aws_vpc.securescan.id
+  service_name      = "com.amazonaws.${var.aws_region}.dynamodb"
+  vpc_endpoint_type = "Gateway"
+  route_table_ids   = [aws_route_table.private.id]
+  tags              = { Name = "securescan-dynamodb-endpoint" }
+}
