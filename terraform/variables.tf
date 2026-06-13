@@ -20,37 +20,9 @@ variable "alert_email" {
   default     = "hari.h@northeastern.edu"
 }
 
-variable "pentest_queue_url" {
-  default = ""
-}
-
-variable "pentest_queue_arn" {
-  default = ""
-}
-
-variable "sns_topic_arn" {
-  default = ""
-}
-
-variable "s3_bucket" {
-  default = "securescan-reports"
-}
-
-variable "vpc_id" {
-  default = ""
-}
-
 variable "private_subnet_ids" {
   type    = list(string)
   default = []
-}
-
-variable "dynamodb_table" {
-  default = "securescan-history"
-}
-
-variable "dynamodb_table_arn" {
-  default = ""
 }
 
 variable "public_subnet_id" {
