@@ -6,11 +6,6 @@ resource "aws_cloudwatch_log_group" "ec2_backend" {
   tags = { Name = "securescan-ec2-logs" }
 }
 
-resource "aws_cloudwatch_log_group" "ecs_pentest" {
-  name              = "/securescan/ecs/pentest"
-  retention_in_days = 14
-  tags = { Name = "securescan-ecs-logs" }
-}
 
 # ── EC2 CPU Alarm ─────────────────────────────────────────
 
