@@ -16,12 +16,12 @@ module "ec2" {
   source = "./modules/ec2"
 
   aws_region            = var.aws_region
-  vpc_id                = var.vpc_id
-  public_subnet_id      = var.public_subnet_id
+  vpc_id                = aws_vpc.securescan.id
+  public_subnet_id      = aws_subnet.public_1.id
   ami_id                = var.ami_id
   key_pair_name         = var.key_pair_name
-  dynamodb_table        = var.dynamodb_table
-  s3_reports_bucket     = var.s3_bucket
+  dynamodb_table        = aws_dynamodb_table.scans.name
+  s3_reports_bucket     = aws_s3_bucket.reports.bucket
   sqs_sast_queue_url    = aws_sqs_queue.scan_queue.url
   sqs_pentest_queue_url = aws_sqs_queue.pentest_queue.url
   sns_topic_arn         = aws_sns_topic.high_severity_alerts.arn
@@ -33,8 +33,8 @@ module "lambda_sast" {
   source = "./modules/lambda-sast"
 
   aws_region        = var.aws_region
-  dynamodb_table    = var.dynamodb_table
-  s3_reports_bucket = var.s3_bucket
+  dynamodb_table    = aws_dynamodb_table.scans.name
+  s3_reports_bucket = aws_s3_bucket.reports.bucket
   sns_topic_arn     = aws_sns_topic.high_severity_alerts.arn
   sast_queue_arn    = aws_sqs_queue.scan_queue.arn
   sast_scanner_url  = var.sast_scanner_url
@@ -53,7 +53,6 @@ module "ecs_pentest" {
   dynamodb_table     = aws_dynamodb_table.scans.name
   dynamodb_table_arn = aws_dynamodb_table.scans.arn
 }
-
 
 # ── CloudWatch Module ──────────────────
 module "cloudwatch" {
