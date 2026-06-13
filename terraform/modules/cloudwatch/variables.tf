@@ -24,5 +24,5 @@ variable "ecs_service_name" {
 variable "dlq_name" {
   type        = string
   description = "Dead letter queue name"
-  default     = "securescan-pentest-dlq"
+  default = "securescan-scan-dlq-dev"
 }
