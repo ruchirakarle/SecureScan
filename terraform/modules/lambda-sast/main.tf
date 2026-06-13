@@ -4,7 +4,7 @@ data "aws_iam_role" "lab_role" {
 
 data "archive_file" "sast_lambda" {
   type        = "zip"
-  source_dir  = "${path.root}/../../sast-lambda"
+  source_dir  = "${path.root}/../sast-lambda"
   output_path = "${path.module}/sast-lambda.zip"
 }
 
