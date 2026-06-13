@@ -34,14 +34,18 @@ export default function History() {
         <button className="btn btn-primary" onClick={() => navigate("/scan")}>+ New Scan</button>
       </div>
       <div style={{ display: "flex", gap: "0.5rem", marginBottom: "1.25rem" }}>
-        {["ALL", "CODE", "API"].map((f) => (
+        {[
+          { value: "ALL", label: "All" },
+          { value: "SAST", label: "⟨/⟩ Code" },
+          { value: "PENTEST", label: "⌁ API" },
+        ].map(({ value, label }) => (
           <button
-            key={f}
-            onClick={() => setFilter(f)}
-            className={`btn ${filter === f ? "btn-primary" : "btn-outline"}`}
+            key={value}
+            onClick={() => setFilter(value)}
+            className={`btn ${filter === value ? "btn-primary" : "btn-outline"}`}
             style={{ fontSize: "0.78rem", padding: "0.35rem 0.9rem" }}
           >
-            {f === "CODE" ? "⟨/⟩ Code" : f === "API" ? "⌁ API" : "All"}
+            {label}
           </button>
         ))}
       </div>
@@ -83,8 +87,8 @@ export default function History() {
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", marginBottom: "0.3rem", flexWrap: "wrap" }}>
-                  <span className={`tag tag-${(scan.scanType || "code").toLowerCase()}`}>
-                    {scan.scanType === "API" ? "⌁ API" : "⟨/⟩ Code"}
+                  <span className={`tag tag-${scan.scanType === "PENTEST" ? "api" : "code"}`}>
+                    {scan.scanType === "PENTEST" ? "⌁ API" : "⟨/⟩ Code"}
                   </span>
                   {scan.severity && <span className={`tag tag-${scan.severity.toLowerCase()}`}>{scan.severity}</span>}
                 </div>

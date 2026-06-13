@@ -13,6 +13,26 @@ function scoreColor(score) {
   return "var(--low)";
 }
 
+// Findings arrive in different shapes depending on scan type:
+//  - SAST: an array of vulnerability objects (top-level, or nested under report)
+//  - PENTEST: report.results — one entry per security test (name/details/status).
+//    Only non-passing tests are surfaced as findings and mapped to the
+//    title/description fields the UI below renders.
+function extractFindings(result) {
+  if (Array.isArray(result.findings)) return result.findings;
+  if (Array.isArray(result.report?.findings)) return result.report.findings;
+  if (Array.isArray(result.report?.results)) {
+    return result.report.results
+      .filter((t) => t.status && t.status !== "PASS")
+      .map((t) => ({
+        severity: t.severity,
+        title: t.name,
+        description: t.details,
+      }));
+  }
+  return [];
+}
+
 export default function Results() {
   const { state } = useLocation();
   const navigate = useNavigate();
@@ -30,7 +50,8 @@ export default function Results() {
     );
   }
 
-  const { score, scanType, severity, findings = [], createdAt } = result;
+  const { score, scanType, severity, createdAt } = result;
+  const findings = extractFindings(result);
 
   return (
     <div>
@@ -39,8 +60,8 @@ export default function Results() {
           ← New Scan
         </button>
         <h2 style={{ fontFamily: "var(--mono)" }}>Scan Results</h2>
-        <span className={`tag tag-${(scanType || "code").toLowerCase()}`}>
-          {scanType === "API" ? "⌁ API Scan" : "⟨/⟩ Code Scan"}
+        <span className={`tag tag-${scanType === "PENTEST" ? "api" : "code"}`}>
+          {scanType === "PENTEST" ? "⌁ API Scan" : "⟨/⟩ Code Scan"}
         </span>
       </div>
       <div className="card" style={{ display: "flex", alignItems: "center", gap: "2rem", marginBottom: "1.5rem", flexWrap: "wrap" }}>
