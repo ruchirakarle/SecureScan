@@ -20,8 +20,6 @@ variable "alert_email" {
   default     = "hari.h@northeastern.edu"
 }
 
-
-# Person 3 variables by Ruchira
 variable "pentest_queue_url" {
   default = ""
 }
@@ -53,4 +51,25 @@ variable "dynamodb_table" {
 
 variable "dynamodb_table_arn" {
   default = ""
+}
+
+variable "public_subnet_id" {
+  type    = string
+  default = ""
+}
+
+variable "ami_id" {
+  type    = string
+  default = ""
+}
+
+variable "key_pair_name" {
+  type    = string
+  default = ""
+}
+
+variable "sast_scanner_url" {
+  description = "URL of the deployed SAST API server"
+  type        = string
+  default     = ""
 }
