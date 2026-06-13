@@ -34,13 +34,10 @@ async function getScanJob(scanId) {
 }
 
 async function listScans(limit = 20) {
-  const result = await dynamo.scan({
-    TableName: TABLE,
-    Limit: limit,
-  }).promise();
-  return (result.Items || []).sort((a, b) =>
-    new Date(b.createdAt) - new Date(a.createdAt)
-  );
+  const result = await dynamo.scan({ TableName: TABLE }).promise();
+  return (result.Items || [])
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+    .slice(0, limit);
 }
 
 module.exports = { createScanJob, getScanJob, listScans };
