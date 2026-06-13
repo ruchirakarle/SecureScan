@@ -38,6 +38,15 @@ variable "s3_bucket" {
   default = "securescan-reports"
 }
 
+variable "vpc_id" {
+  default = ""
+}
+
+variable "private_subnet_ids" {
+  type    = list(string)
+  default = []
+}
+
 variable "dynamodb_table" {
   default = "securescan-history"
 }
