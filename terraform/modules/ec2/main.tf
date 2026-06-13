@@ -1,3 +1,12 @@
+data "aws_iam_role" "lab_role" {
+  name = "LabRole"
+}
+
+resource "aws_iam_instance_profile" "backend" {
+  name = "securescan-backend-profile"
+  role = data.aws_iam_role.lab_role.name
+}
+
 resource "aws_security_group" "backend" {
   name        = "securescan-backend-sg"
   description = "Security group for SecureScan backend API"
@@ -46,55 +55,4 @@ resource "aws_instance" "backend" {
   }))
 
   tags = { Name = "securescan-backend" }
-}
-
-resource "aws_iam_role" "backend" {
-  name = "securescan-backend-role"
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [{
-      Action    = "sts:AssumeRole"
-      Effect    = "Allow"
-      Principal = { Service = "ec2.amazonaws.com" }
-    }]
-  })
-}
-
-resource "aws_iam_role_policy" "backend" {
-  name = "securescan-backend-policy"
-  role = aws_iam_role.backend.id
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Action = [
-          "dynamodb:PutItem", "dynamodb:GetItem",
-          "dynamodb:UpdateItem", "dynamodb:Scan", "dynamodb:Query"
-        ]
-        Resource = "arn:aws:dynamodb:*:*:table/${var.dynamodb_table}*"
-      },
-      {
-        Effect   = "Allow"
-        Action   = ["s3:GetObject", "s3:PutObject", "s3:ListBucket"]
-        Resource = ["arn:aws:s3:::${var.s3_reports_bucket}/*",
-                    "arn:aws:s3:::${var.s3_reports_bucket}"]
-      },
-      {
-        Effect   = "Allow"
-        Action   = ["sqs:SendMessage", "sqs:GetQueueAttributes"]
-        Resource = "*"
-      },
-      {
-        Effect   = "Allow"
-        Action   = ["sns:Publish"]
-        Resource = var.sns_topic_arn
-      }
-    ]
-  })
-}
-
-resource "aws_iam_instance_profile" "backend" {
-  name = "securescan-backend-profile"
-  role = aws_iam_role.backend.name
 }
