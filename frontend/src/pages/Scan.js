@@ -24,8 +24,9 @@ export default function Scan() {
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
-  async function pollUntilDone(scanId) {
-    while (activeRef.current) {
+  async function pollUntilDone(scanId, maxAttempts = 30) {
+    let attempts = 0;
+    while (activeRef.current && attempts < maxAttempts) {
       const result = await fetchScan(scanId);
       if (result.status === "COMPLETED") return result;
       if (result.status === "FAILED") {
@@ -33,6 +34,10 @@ export default function Scan() {
       }
       setStatus(result.status || "PENDING");
       await wait(POLL_INTERVAL_MS);
+      attempts++;
+    }
+    if (attempts >= maxAttempts) {
+      throw new Error("Scan timed out. Please try again.");
     }
     return null;
   }
