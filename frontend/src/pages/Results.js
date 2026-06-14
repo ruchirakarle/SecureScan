@@ -14,22 +14,17 @@ function scoreColor(score) {
 }
 
 // Findings arrive in different shapes depending on scan type:
-//  - SAST: an array of vulnerability objects (top-level, or nested under report)
-//  - PENTEST: report.results — one entry per security test (name/details/status).
-//    Only non-passing tests are surfaced as findings and mapped to the
-//    title/description fields the UI below renders.
+//  - PENTEST (report.results): one entry per security test, each with the real
+//    fields { name, status, severity, details, findings: [...] }. Only
+//    non-passing tests are surfaced. Returned raw so the UI uses their actual
+//    field names.
+//  - SAST (report.findings): array of vulnerability objects from the scanner.
 function extractFindings(result) {
-  if (Array.isArray(result.findings)) return result.findings;
-  if (Array.isArray(result.report?.findings)) return result.report.findings;
   if (Array.isArray(result.report?.results)) {
-    return result.report.results
-      .filter((t) => t.status && t.status !== "PASS")
-      .map((t) => ({
-        severity: t.severity,
-        title: t.name,
-        description: t.details,
-      }));
+    return result.report.results.filter((t) => t.status && t.status !== "PASS");
   }
+  if (Array.isArray(result.report?.findings)) return result.report.findings;
+  if (Array.isArray(result.findings)) return result.findings;
   return [];
 }
 
@@ -100,12 +95,34 @@ export default function Results() {
                 {f.severity || "LOW"}
               </span>
               <div style={{ flex: 1 }}>
-                <div style={{ fontWeight: 600, fontSize: "0.9rem", marginBottom: "0.2rem" }}>
-                  {f.type || f.title || "Vulnerability"}
+                <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", marginBottom: "0.2rem", flexWrap: "wrap" }}>
+                  <span style={{ fontWeight: 600, fontSize: "0.9rem" }}>
+                    {f.name || f.type || f.title || "Vulnerability"}
+                  </span>
+                  {f.status && (
+                    <span
+                      className={`tag tag-${f.status === "FAIL" ? "high" : "medium"}`}
+                      style={{ fontSize: "0.7rem" }}
+                    >
+                      {f.status}
+                    </span>
+                  )}
                 </div>
-                <div style={{ color: "var(--muted)", fontSize: "0.82rem", lineHeight: 1.5 }}>
-                  {f.description || f.message}
-                </div>
+                {(f.details || f.description || f.message) && (
+                  <div style={{ color: "var(--muted)", fontSize: "0.82rem", lineHeight: 1.5 }}>
+                    {f.details || f.description || f.message}
+                  </div>
+                )}
+                {Array.isArray(f.findings) && f.findings.length > 0 && (
+                  <ul style={{ margin: "0.5rem 0 0", paddingLeft: "1.1rem", color: "var(--muted)", fontSize: "0.8rem", lineHeight: 1.6 }}>
+                    {f.findings.map((sub, j) => (
+                      <li key={j}>
+                        {sub.issue || sub.message || JSON.stringify(sub)}
+                        {sub.evidence && <span style={{ color: "var(--accent)" }}> — {sub.evidence}</span>}
+                      </li>
+                    ))}
+                  </ul>
+                )}
                 {f.line && (
                   <div style={{ fontFamily: "var(--mono)", fontSize: "0.75rem", color: "var(--accent)", marginTop: "0.3rem" }}>
                     Line {f.line}
