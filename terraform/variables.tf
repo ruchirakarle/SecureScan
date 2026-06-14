@@ -39,9 +39,3 @@ variable "key_pair_name" {
   type    = string
   default = ""
 }
-
-variable "sast_scanner_url" {
-  description = "URL of the deployed SAST API server"
-  type        = string
-  default     = ""
-}
