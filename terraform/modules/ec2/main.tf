@@ -63,3 +63,9 @@ resource "aws_instance" "backend" {
 
   tags = { Name = "securescan-backend" }
 }
+
+resource "aws_eip" "backend" {
+  instance = aws_instance.backend.id
+  domain   = "vpc"
+  tags     = { Name = "securescan-backend-eip" }
+}
