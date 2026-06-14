@@ -2,7 +2,6 @@ version: "3.9"
 
 services:
 
-  # ── Person 2: Node.js/Express API ───────────────────────────
   backend:
     build:
       context: ./backend
@@ -16,7 +15,7 @@ services:
       - AWS_SECRET_ACCESS_KEY=local
       - DYNAMODB_ENDPOINT=http://dynamodb-local:8000
       - DYNAMODB_TABLE=securescan-scans-dev
-      - SNS_HIGH_SEVERITY_ARN=arn:aws:sns:us-east-1:509178112369:securescan-high-severity-dev
+      - SNS_HIGH_SEVERITY_ARN=arn:aws:sns:us-east-1:000000000000:securescan-high-severity-dev
       - PENTEST_SERVICE_URL=http://pentest:3002
       - SQS_SAST_QUEUE_URL=http://elasticmq:9324/queue/securescan-sast-queue
       - SQS_PENTEST_QUEUE_URL=http://elasticmq:9324/queue/securescan-pentest-queue
@@ -25,7 +24,6 @@ services:
       - elasticmq
     restart: unless-stopped
 
-  # ── Person 3: Pentest scanner ────────────────────────────────
   pentest:
     build:
       context: ./pentest/backend
@@ -34,6 +32,17 @@ services:
       - "3002:3002"
     environment:
       - PORT=3002
+      - AWS_REGION=us-east-1
+      - AWS_ACCESS_KEY_ID=local
+      - AWS_SECRET_ACCESS_KEY=local
+      - PENTEST_QUEUE_URL=http://elasticmq:9324/queue/securescan-pentest-queue
+      - DYNAMODB_TABLE=securescan-scans-dev
+      - DYNAMODB_ENDPOINT=http://dynamodb-local:8000
+      - S3_BUCKET=securescan-reports-dev
+      - SNS_TOPIC_ARN=arn:aws:sns:us-east-1:000000000000:securescan-alerts-dev
+    depends_on:
+      - dynamodb-local
+      - elasticmq
     restart: unless-stopped
 
   # ── ElasticMQ (local SQS) ────────────────────────────────────
