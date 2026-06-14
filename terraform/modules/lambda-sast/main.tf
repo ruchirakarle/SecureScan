@@ -2,10 +2,23 @@ data "aws_iam_role" "lab_role" {
   name = "LabRole"
 }
 
+resource "null_resource" "sast_lambda_deps" {
+  triggers = {
+    package_json = filemd5("${path.root}/../sast-lambda/package.json")
+  }
+
+  provisioner "local-exec" {
+    command     = "npm install"
+    working_dir = "${path.root}/../sast-lambda"
+  }
+}
+
 data "archive_file" "sast_lambda" {
   type        = "zip"
   source_dir  = "${path.root}/../sast-lambda"
   output_path = "${path.module}/sast-lambda.zip"
+
+  depends_on = [null_resource.sast_lambda_deps]
 }
 
 resource "aws_lambda_function" "sast" {
