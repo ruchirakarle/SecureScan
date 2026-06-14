@@ -89,13 +89,6 @@ resource "aws_route_table_association" "private_2" {
   route_table_id = aws_route_table.private.id
 }
 
-resource "aws_vpc_endpoint" "s3" {
-  vpc_id       = aws_vpc.securescan.id
-  service_name = "com.amazonaws.${var.aws_region}.s3"
-  route_table_ids = [aws_route_table.private.id]
-  tags = { Name = "securescan-s3-endpoint" }
-}
-
 
 resource "aws_vpc_endpoint" "dynamodb" {
   vpc_id            = aws_vpc.securescan.id
