@@ -96,6 +96,15 @@ resource "aws_vpc_endpoint" "s3" {
   tags = { Name = "securescan-s3-endpoint" }
 }
 
+
+resource "aws_vpc_endpoint" "dynamodb" {
+  vpc_id            = aws_vpc.securescan.id
+  service_name      = "com.amazonaws.${var.aws_region}.dynamodb"
+  vpc_endpoint_type = "Gateway"
+  route_table_ids   = [aws_route_table.private.id]
+  tags              = { Name = "securescan-dynamodb-endpoint" }
+}
+
 output "vpc_id" {
   value = aws_vpc.securescan.id
 }
