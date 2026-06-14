@@ -1,7 +1,11 @@
 const AWS = require('aws-sdk');
-const dynamo = new AWS.DynamoDB.DocumentClient({
-  region: process.env.AWS_REGION
-});
+const clientConfig = {
+  region: process.env.AWS_REGION,
+};
+if (process.env.DYNAMODB_ENDPOINT) {
+  clientConfig.endpoint = process.env.DYNAMODB_ENDPOINT;
+}
+const dynamo = new AWS.DynamoDB.DocumentClient(clientConfig);
 const TABLE = process.env.DYNAMODB_TABLE;
 
 async function createScanJob(scanId, scanType, targetInput) {
