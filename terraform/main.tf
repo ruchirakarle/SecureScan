@@ -25,7 +25,14 @@ module "ec2" {
   sqs_sast_queue_url    = aws_sqs_queue.scan_queue.url
   sqs_pentest_queue_url = aws_sqs_queue.pentest_queue.url
   sns_topic_arn         = aws_sns_topic.high_severity_alerts.arn
-  sast_scanner_url      = "http://${module.ec2.public_ip}:3000"
+  sast_scanner_url      = "http://localhost:3000"
+}
+
+# ── Elastic IP for stable backend address ─
+resource "aws_eip" "backend" {
+  instance = module.ec2.instance_id
+  domain   = "vpc"
+  tags     = { Name = "securescan-backend-eip" }
 }
 
 # ── Lambda SAST Module ─────────────────
@@ -37,7 +44,7 @@ module "lambda_sast" {
   s3_reports_bucket = aws_s3_bucket.reports.bucket
   sns_topic_arn     = aws_sns_topic.high_severity_alerts.arn
   sast_queue_arn    = aws_sqs_queue.scan_queue.arn
-  sast_scanner_url  = "http://${module.ec2.public_ip}:3000"
+  sast_scanner_url  = "http://${aws_eip.backend.public_ip}:3000"
 }
 
 # ── ECS Pentest Module ─────────────────
@@ -64,7 +71,7 @@ module "cloudwatch" {
   dlq_name         = aws_sqs_queue.scan_dlq.name
 }
 
-# ── Output the backend IP for reference ─
+# ── Output the backend IP ──────────────
 output "backend_ip" {
-  value = module.ec2.public_ip
+  value = aws_eip.backend.public_ip
 }
